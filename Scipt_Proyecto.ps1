@@ -1,4 +1,4 @@
-﻿#Proyecto Manolo
+#Proyecto Manolo
 
                 #Definición de Función Menú.
 function Get-Menu
@@ -20,37 +20,63 @@ Write-Host `n
 
     
 }
-                #Definicion de Función Crear Disco Virtual.
 
-function Crear-Disco
-{
+
+#funcion para activar el hiper-v
+function get-hiperv {
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+}
+
+#desactiva el hiper-v
+function get-hipervdown{
+Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
+}
+
+#funcion menucrear
+function get-menucrear {
+Cls
+Write-Host `n
+Write-Host "1.-Activar Hiper-v"
+Write-Host `n
+Write-Host `t "2.-Desactivar Hiper-v"
+Write-Host `n
+Write-Host `t`t "3.-Crear disco"
+Write-Host `n
+Write-Host `t`t`t "4.-volver al menu principal"
+Write-Host `n
+Write-Host `n
+[int]$omg=Read-Host "elige una opcion"
+switch($omg){
+#llama a las diferentes funciones
+  1 {get-hiperv}
+  2 {get-hipervdown}
+  3 {get-creardisco}
+  4 {Get-Menu}
+
+}#fin switch
+}
+
+function get-creardisco{
+#crea un disco lo monta y lo formatea como ntfs
+
 do{
-Write-Host "Ha seleccionado Crear un Disco Virtual"
+
+Write-Host "Ha seleccionado Crear un Disco Virtual, recuerde que debe desactivar en Servicios la detección de Hardware de Powershell."
 Write-Host `n
-#Definición de parametros.
 $rutacrear = Read-Host "Indique el Nombre del disco (además de la ruta para el mismo) Ejemplo: E:\Discos\Disco01.vhd"
+[int]$temp = Read-Host “Tamaño del disco en GBytes”
+[double]$tamano = $temp * 1000000000
+New-VHD -Path $rutacrear -Dynamic -SizeBytes $tamano|Mount-VHD -Passthru|Initialize-Disk -PassThru|New-Partition -AssignDriveLetter -UseMaximumSize|Format-Volume -FileSystem NTFS -Confirm:$false
 Write-Host `n
-[int]$tamanocrear = Read-Host "Introduzca el tamaño como dígito en GB" 
-
-#Int es para valores pequeños, para un valor tan grande como e^9 usamos [double].
-[double]$tamano2crear = $tamanocrear * 1000000000
-
-
-Write-Host "Creando disco Virtual"
 Write-Host `n
-
-    #Comando para Crear el disco virtual.
-New-VHD –path $rutacrear –Dynamic –sizeBytes $tamano2crear | Mount-VHD –Passthru | Initialize-Disk –Passthru | New-Partition –AssignDriveletter –usemaximumsize | Format-volume –Filesystem NTFS –Confirm:$false
-
-Write-Host `n
-Write-Host "Disco Virtual creado con éxito"
+Write-Host "Disco Virtual creado con éxito $rutacrear"
 Write-Host `n
     
-    #Pregunta para crear otro Disco.
-$respuestacrear = Read-Host "¿Desea crear otro? S/N"
+$respuesta = Read-Host “Quieres crear otro disco (S/N)?”}while ($respuesta -eq ‘s’)
 
-}while($respuestacrear -eq 'S')
 }
+
+
                 #Definicion de Función Borrar Disco Virtual
 
 function Borrar-Disco
@@ -116,9 +142,9 @@ Write-Host `n
                 #Pregunta de Variables
 Get-Volume |ft -AutoSize
 Write-Host `n
-$rutaBitlocker = Read-Host "¿Que unidad desea encriptar?"
+$rutaBitlocker = Read-Host "¿Que unidad desea encriptar?. Ejemplo: D:"
 Write-Host `n
-$rutaRecovery = Read-Host "¿Dónde desea almacenar la contraseña Recovery? No se puede almacenar en el disco duro a Encriptar"
+$rutaRecovery = Read-Host "¿Dónde desea almacenar la contraseña Recovery? No se puede almacenar en el disco duro a Encriptar. Ejemplo: E:"
 Write-Host `n
 $contrasena = Read-Host "Introduzca la contraseña que desea utilizar para encriptar. Mínimo 8 Carácteres"
 Write-Host `n
@@ -128,10 +154,12 @@ $bitlockerContrasena = ConvertTo-SecureString "$contrasena" -AsPlainText -Force
 Enable-BitLocker -MountPoint "$rutaBitlocker" -EncryptionMethod Aes128 -PasswordProtector $bitlockerContrasena
 Add-BitLockerKeyProtector -MountPoint "$rutaBitlocker" -RecoveryPasswordProtector
 #Ayuda encontrada en https://blogs.technet.microsoft.com/heyscriptingguy/2013/08/17/powertip-use-powershell-to-write-bitlocker-recovery-key-to-text-file/
-(Get-BitLockerVolume -MountPoint "$rutaBitlocker").KeyProtector.recoverypassword > "$rutarecovery/Bitlocker.txt"
+(Get-BitLockerVolume -MountPoint "$rutaBitlocker").KeyProtector.recoverypassword > "$rutarecovery\Bitlocker.txt"
                 #FIN
                 
 Write-Host "Encriptado completado con éxito, recovery almacenado en $rutarecovery"
+Write-Host `n
+Write-Host "El disco está abierto, al reconectarlo pedirá su contraseña." 
 }
 
 
@@ -159,7 +187,7 @@ switch ($switch01)
                 #Opción número 1.- Crear Disco Duro Virtual
  1 {
 
-Crear-Disco
+ get-menucrear
 
  }
  
@@ -190,3 +218,4 @@ Write-Host `n
     
 }
 while ($True)
+
