@@ -63,10 +63,11 @@ do{
 
 Write-Host "Ha seleccionado Crear un Disco Virtual, recuerde que debe desactivar en Servicios la deteccion de Hardware de Powershell."
 Write-Host `n
-$rutacrear = Read-Host "Indique el Nombre del disco (ademÃ¡s de la ruta para el mismo) Ejemplo: E:\Discos\Disco01.vhd"
-[int]$temp = Read-Host "Tamanoo del disco en GByte"
+$rutacrear = Read-Host "Indique el Nombre del disco (ademass de la ruta para el mismo) Ejemplo: E:\Discos\Disco01.vhd"
+[int]$temp = Read-Host "Tamano del disco en GByte"
 [double]$tamano = $temp * 1000000000
-New-VHD -Path $rutacrear -Dynamic -SizeBytes $tamano|Mount-VHD -Passthru|Initialize-Disk -PassThru|New-Partition -AssignDriveLetter -UseMaximumSize|Format-Volume -FileSystem NTFS -Confirm:$false
+New-VHD -Path "$rutacrear" -Dynamic -SizeBytes $tamano |Mount-VHD -Passthru|Initialize-Disk -PassThru|New-Partition -AssignDriveLetter -UseMaximumSize|Format-Volume -FileSystem NTFS -Confirm:$false
+
 Write-Host `n
 Write-Host `n
 Write-Host "Disco Virtual creado con Exito $rutacrear"
@@ -90,7 +91,7 @@ Write-Host `n
 $rutaborrar = Read-Host "Indique el Nombre del disco (ademas de la ruta para el mismo) Ejemplo: E:\Discos\Disco01.vhd"
 
                 #Inicio del programa de Borrado
-Dismount-VHD -Path $rutaborrar -Confirm:$false
+Dismount-VHD -Path "$rutaborrar" -Confirm:$false
 Write-Host `n
 Write-Host "Disco Desmontado"
 Write-Host `n
@@ -100,7 +101,7 @@ Write-Host `n
 #Pregunta de Seguridad para borrar
 if ($respuestaborrar -eq 'S')
 {
-Remove-Item -Path $rutaborrar -Force -Confirm:$false
+Remove-Item -Path "$rutaborrar" -Force -Confirm:$false
 #Usamos un Break para abortar
 }else{break}
 Write-Host `n
@@ -143,19 +144,19 @@ Write-Host `n
                 #Pregunta de Variables
 Get-Volume |ft -AutoSize
 Write-Host `n
-$rutaBitlocker = Read-Host "¿Que unidad desea encriptar?. Ejemplo: D:"
+$rutaBitlocker = Read-Host "¿Que unidad desea encriptar?. Ejemplo: D"
 Write-Host `n
-$rutaRecovery = Read-Host "¿Donde desea almacenar la contrasena Recovery? No se puede almacenar en el disco duro a Encriptar. Ejemplo: E:"
+$rutaRecovery = Read-Host "¿Donde desea almacenar la contrasena Recovery? No se puede almacenar en el disco duro a Encriptar. Ejemplo: E:\Recovery\Recovery.txt"
 Write-Host `n
 $contrasena = Read-Host "Introduzca la contrasena que desea utilizar para encriptar. Mi­nimo 8 Caracteres"
 Write-Host `n
 
                 #Inicio de comandos
 $bitlockerContrasena = ConvertTo-SecureString "$contrasena" -AsPlainText -Force
-Enable-BitLocker -MountPoint "$rutaBitlocker" -EncryptionMethod Aes128 -PasswordProtector $bitlockerContrasena
+Enable-BitLocker -MountPoint "$rutaBitlocker" -EncryptionMethod Aes256 -PasswordProtector "$bitlockerContrasena" -UsedSpaceOnly
 Add-BitLockerKeyProtector -MountPoint "$rutaBitlocker" -RecoveryPasswordProtector
 #Ayuda encontrada en https://blogs.technet.microsoft.com/heyscriptingguy/2013/08/17/powertip-use-powershell-to-write-bitlocker-recovery-key-to-text-file/
-(Get-BitLockerVolume -MountPoint "$rutaBitlocker").KeyProtector.recoverypassword > "$rutarecovery\Bitlocker.txt"
+(Get-BitLockerVolume -MountPoint "$rutaBitlocker").KeyProtector.recoverypassword > "$rutarecovery"
                 #FIN
                 
 Write-Host "Encriptado completado con Exito, recovery almacenado en $rutarecovery"
